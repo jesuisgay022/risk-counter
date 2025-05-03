@@ -317,19 +317,29 @@
     </div>
 
     <script>
-        // Initialize Firebase
+        // Initialize Firebase with new public configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyDQhXBHWQKuqtnHHi2Hs1j9RR_JI_kYwXE",
-            authDomain: "risk-counter-4f8c4.firebaseapp.com",
-            databaseURL: "https://risk-counter-4f8c4-default-rtdb.firebaseio.com",
-            projectId: "risk-counter-4f8c4",
-            storageBucket: "risk-counter-4f8c4.appspot.com",
+            apiKey: "AIzaSyBPdtxZn4qpqbDvvxGlYOVRPY4PhfMHNx0",
+            authDomain: "risk-counter-game.firebaseapp.com",
+            databaseURL: "https://risk-counter-game-default-rtdb.firebaseio.com",
+            projectId: "risk-counter-game",
+            storageBucket: "risk-counter-game.appspot.com",
             messagingSenderId: "1098333936793",
             appId: "1:1098333936793:web:b7f1a7d7e8f8b8f8b8f8b8"
         };
 
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+
+        // Add error handling for Firebase operations
+        database.ref('.info/connected').on('value', (snap) => {
+            if (snap.val() === true) {
+                console.log('Connected to Firebase');
+            } else {
+                console.log('Not connected to Firebase');
+            }
+        });
 
         let count = 0;
         let highScore = parseInt(localStorage.getItem('highScore')) || 0;
@@ -342,13 +352,17 @@
         // Load leaderboard from Firebase
         function loadLeaderboard() {
             database.ref('leaderboard').on('value', (snapshot) => {
-                const data = snapshot.val() || {};
-                leaderboard = Object.values(data);
-                // Sort by high score
-                leaderboard.sort((a, b) => b.highScore - a.highScore);
-                // Keep top 10
-                leaderboard = leaderboard.slice(0, 10);
-                displayLeaderboard();
+                try {
+                    const data = snapshot.val() || {};
+                    leaderboard = Object.values(data);
+                    leaderboard.sort((a, b) => b.highScore - a.highScore);
+                    leaderboard = leaderboard.slice(0, 10);
+                    displayLeaderboard();
+                } catch (error) {
+                    console.error('Error loading leaderboard:', error);
+                }
+            }, (error) => {
+                console.error('Error loading leaderboard:', error);
             });
         }
 
@@ -360,6 +374,8 @@
                 name: username,
                 highScore: highScore,
                 avgScore: (totalScore / gamesPlayed).toFixed(2)
+            }).catch(error => {
+                console.error('Error updating leaderboard:', error);
             });
         }
 
