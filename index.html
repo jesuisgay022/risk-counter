@@ -271,6 +271,35 @@
             font-weight: 600;
             color: #2d3436;
         }
+        
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+            background: transparent;
+        }
+        
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 8px 6px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .leaderboard-table th {
+            background: #f1f2f6;
+            color: #2d3436;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        
+        .leaderboard-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        .leaderboard-table tr:hover {
+            background: #dff9fb;
+        }
     </style>
 </head>
 
@@ -307,9 +336,20 @@
 
         <div class="leaderboard">
             <h2>Leaderboard</h2>
-            <ul class="leaderboard-list" id="leaderboardList">
-                <!-- Leaderboard entries will be inserted here -->
-            </ul>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>High Score</th>
+                        <th>Avg Score</th>
+                        <th>Clicks</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardList">
+                    <!-- Leaderboard entries will be inserted here -->
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -369,15 +409,15 @@
             const leaderboardList = document.getElementById('leaderboardList');
             leaderboardList.innerHTML = '';
             leaderboard.forEach((entry, index) => {
-                const li = document.createElement('li');
-                li.className = 'leaderboard-item';
-                li.innerHTML = `
-                    <span class="player-name">${index + 1}. ${entry.name}</span>
-                    <span class="player-score">${entry.highScore}%</span>
-                    <span class="player-avg">Avg: ${entry.avgScore || 0}</span>
-                    <span class="player-clicks">Clicks: ${entry.totalClicks || 0}</span>
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${entry.name}</td>
+                    <td>${entry.highScore}%</td>
+                    <td>${entry.avgScore || 0}</td>
+                    <td>${entry.totalClicks || 0}</td>
                 `;
-                leaderboardList.appendChild(li);
+                leaderboardList.appendChild(tr);
             });
         }
 
