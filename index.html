@@ -381,6 +381,7 @@
         let gamesPlayed = parseInt(localStorage.getItem('gamesPlayed')) || 0;
         let username = localStorage.getItem('username') || '';
         let leaderboard = [];
+        let maxCPS = 0;
 
         // Load leaderboard from Firebase
         function loadLeaderboard() {
@@ -459,6 +460,7 @@
             const now = Date.now();
             clickTimestamps = clickTimestamps.filter(ts => now - ts <= 1000);
             const cps = clickTimestamps.length;
+            if (cps > maxCPS) maxCPS = cps;
             document.getElementById('cps').textContent = `CPS: ${cps.toFixed(2)}`;
         }
         setInterval(updateCPS, 100);
@@ -476,6 +478,18 @@
 
             clickTimestamps.push(Date.now());
             updateCPS();
+
+            // Prevent autoclickers: if maxCPS > 20, block score submission
+            if (maxCPS > 20) {
+                alert('Autoclicking detected! Your score will not be submitted.');
+                // Reset game state
+                count = 0;
+                maxCPS = 0;
+                document.getElementById('counter').textContent = '0%';
+                document.getElementById('counter').style.fontSize = '24px';
+                document.getElementById('counter').classList.remove('shake');
+                return;
+            }
 
             const counterElement = document.getElementById('counter');
             counterElement.textContent = count + '%';
@@ -514,6 +528,7 @@
                 updateLeaderboard();
 
                 count = 0;
+                maxCPS = 0;
                 counterElement.textContent = count + '%';
                 counterElement.style.fontSize = '24px';
                 counterElement.classList.remove('shake');
