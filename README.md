@@ -4,7 +4,7 @@ A simple yet addictive browser game where you test your luck! How far can you pu
 
 ## Play Now
 
-👉 [Play Risk Counter](https://YOUR_GITHUB_USERNAME.github.io/risk-counter/)
+👉 [Play Risk Counter](https://jesuisgay022.github.io/risk-counter/)
 
 ## How to Play
 
@@ -31,7 +31,7 @@ This game is built with pure HTML, CSS, and JavaScript. No external dependencies
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/risk-counter.git
+git clone https://github.com/jesuisgay022/risk-counter.git
 ```
 
 2. Open `index.html` in your web browser
