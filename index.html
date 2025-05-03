@@ -4,6 +4,9 @@
 <head>
     <title>Risk Counter</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Add Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -314,6 +317,20 @@
     </div>
 
     <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQhXBHWQKuqtnHHi2Hs1j9RR_JI_kYwXE",
+            authDomain: "risk-counter-4f8c4.firebaseapp.com",
+            databaseURL: "https://risk-counter-4f8c4-default-rtdb.firebaseio.com",
+            projectId: "risk-counter-4f8c4",
+            storageBucket: "risk-counter-4f8c4.appspot.com",
+            messagingSenderId: "1098333936793",
+            appId: "1:1098333936793:web:b7f1a7d7e8f8b8f8b8f8b8"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
         let count = 0;
         let highScore = parseInt(localStorage.getItem('highScore')) || 0;
         let totalClicks = parseInt(localStorage.getItem('totalClicks')) || 0;
@@ -322,71 +339,32 @@
         let username = localStorage.getItem('username') || '';
         let leaderboard = [];
 
-        // JSONBin.io configuration
-        const JSONBIN_API_KEY = '$2a$10$Hs/Oi9YPGtXgCJXQxW6Oqur5IfNnKEHxWR.tVD4HvXJRnxj3UoOGi'; // Read-only API key
-        const JSONBIN_BIN_ID = '65e4e2a8dc74654018a8c7c4';
-        const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
-
-        // Load global leaderboard
-        async function loadGlobalLeaderboard() {
-            try {
-                const response = await fetch(JSONBIN_URL, {
-                    headers: {
-                        'X-Master-Key': JSONBIN_API_KEY
-                    }
-                });
-                const data = await response.json();
-                leaderboard = data.record || [];
+        // Load leaderboard from Firebase
+        function loadLeaderboard() {
+            database.ref('leaderboard').on('value', (snapshot) => {
+                const data = snapshot.val() || {};
+                leaderboard = Object.values(data);
+                // Sort by high score
+                leaderboard.sort((a, b) => b.highScore - a.highScore);
+                // Keep top 10
+                leaderboard = leaderboard.slice(0, 10);
                 displayLeaderboard();
-            } catch (error) {
-                console.error('Error loading leaderboard:', error);
-            }
+            });
         }
 
-        // Update global leaderboard
-        async function updateGlobalLeaderboard() {
+        // Update leaderboard in Firebase
+        function updateLeaderboard() {
             if (!username) return;
 
-            // Find existing entry for this user
-            const existingEntry = leaderboard.find(entry => entry.name === username);
-
-            if (existingEntry) {
-                existingEntry.highScore = Math.max(existingEntry.highScore, highScore);
-                existingEntry.avgScore = (totalScore / gamesPlayed).toFixed(2);
-            } else {
-                leaderboard.push({
-                    name: username,
-                    highScore: highScore,
-                    avgScore: (totalScore / gamesPlayed).toFixed(2)
-                });
-            }
-
-            // Sort leaderboard by high score
-            leaderboard.sort((a, b) => b.highScore - a.highScore);
-
-            // Keep only top 10
-            leaderboard = leaderboard.slice(0, 10);
-
-            try {
-                // Update JSONBin
-                await fetch(JSONBIN_URL, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': JSONBIN_API_KEY
-                    },
-                    body: JSON.stringify(leaderboard)
-                });
-            } catch (error) {
-                console.error('Error updating leaderboard:', error);
-            }
-
-            // Update display
-            displayLeaderboard();
+            database.ref('leaderboard/' + username).set({
+                name: username,
+                highScore: highScore,
+                avgScore: (totalScore / gamesPlayed).toFixed(2)
+            });
         }
 
-        // Load the global leaderboard when the page loads
-        loadGlobalLeaderboard();
+        // Load the leaderboard when the page loads
+        loadLeaderboard();
 
         // Check if username exists
         if (username) {
@@ -401,7 +379,7 @@
                 localStorage.setItem('username', username);
                 document.getElementById('usernameModal').classList.add('hidden');
                 document.getElementById('playerInfo').textContent = `Player: ${username}`;
-                updateGlobalLeaderboard();
+                updateLeaderboard();
             }
         }
 
@@ -431,7 +409,17 @@
         document.getElementById('highScore').textContent = highScore;
         document.getElementById('totalClicks').textContent = totalClicks;
         document.getElementById('averageScore').textContent = (totalScore / (gamesPlayed || 1)).toFixed(2);
-        displayLeaderboard();
+
+        // CPS tracking
+        let clickTimestamps = [];
+
+        function updateCPS() {
+            const now = Date.now();
+            clickTimestamps = clickTimestamps.filter(ts => now - ts <= 1000);
+            const cps = clickTimestamps.length;
+            document.getElementById('cps').textContent = `CPS: ${cps.toFixed(2)}`;
+        }
+        setInterval(updateCPS, 100);
 
         function incrementCounter() {
             if (!username) return;
@@ -443,6 +431,9 @@
 
             count++;
             totalClicks++;
+
+            clickTimestamps.push(Date.now());
+            updateCPS();
 
             const counterElement = document.getElementById('counter');
             counterElement.textContent = count + '%';
@@ -478,7 +469,7 @@
                 localStorage.setItem('gamesPlayed', gamesPlayed);
                 document.getElementById('averageScore').textContent = (totalScore / gamesPlayed).toFixed(2);
 
-                updateGlobalLeaderboard();
+                updateLeaderboard();
 
                 count = 0;
                 counterElement.textContent = count + '%';
