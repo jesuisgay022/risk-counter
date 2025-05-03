@@ -313,11 +313,26 @@
         </div>
     </div>
 
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <script>
-        // --- Leaderboard using npoint.io ---
-        // Public read-only endpoint:
-        const LEADERBOARD_URL = 'https://api.npoint.io/464b311f7ed69a742633';
-        // To update the leaderboard, go to: https://www.npoint.io/docs/464b311f7ed69a742633
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBLD2LOinxjQ1Oi-nuR09FRcDM0xqW6I-U",
+            authDomain: "risk-counter-leaderboard.firebaseapp.com",
+            databaseURL: "https://risk-counter-leaderboard-default-rtdb.firebaseio.com",
+            projectId: "risk-counter-leaderboard",
+            storageBucket: "risk-counter-leaderboard.appspot.com",
+            messagingSenderId: "179361039383",
+            appId: "1:179361039383:web:c766d0a29f9da853198852",
+            measurementId: "G-9FY6SG1Q8Z"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
         let count = 0;
         let highScore = parseInt(localStorage.getItem('highScore')) || 0;
@@ -327,18 +342,25 @@
         let username = localStorage.getItem('username') || '';
         let leaderboard = [];
 
-        // Fetch leaderboard from npoint.io
-        async function loadLeaderboard() {
-            try {
-                const response = await fetch(LEADERBOARD_URL);
-                const data = await response.json();
-                leaderboard = data.leaderboard || [];
+        // Load leaderboard from Firebase
+        function loadLeaderboard() {
+            database.ref('leaderboard').on('value', (snapshot) => {
+                const data = snapshot.val() || {};
+                leaderboard = Object.values(data);
                 leaderboard.sort((a, b) => b.highScore - a.highScore);
                 leaderboard = leaderboard.slice(0, 10);
                 displayLeaderboard();
-            } catch (error) {
-                console.error('Error loading leaderboard:', error);
-            }
+            });
+        }
+
+        // Update leaderboard in Firebase
+        function updateLeaderboard() {
+            if (!username) return;
+            database.ref('leaderboard/' + username).set({
+                name: username,
+                highScore: highScore,
+                avgScore: (totalScore / gamesPlayed).toFixed(2)
+            });
         }
 
         // Display leaderboard
@@ -446,7 +468,7 @@
                 localStorage.setItem('gamesPlayed', gamesPlayed);
                 document.getElementById('averageScore').textContent = (totalScore / gamesPlayed).toFixed(2);
 
-                loadLeaderboard();
+                updateLeaderboard();
 
                 count = 0;
                 counterElement.textContent = count + '%';
