@@ -359,7 +359,8 @@
             database.ref('leaderboard/' + username).set({
                 name: username,
                 highScore: highScore,
-                avgScore: (totalScore / gamesPlayed).toFixed(2)
+                avgScore: (totalScore / gamesPlayed).toFixed(2),
+                totalClicks: totalClicks
             });
         }
 
@@ -373,6 +374,8 @@
                 li.innerHTML = `
                     <span class="player-name">${index + 1}. ${entry.name}</span>
                     <span class="player-score">${entry.highScore}%</span>
+                    <span class="player-avg">Avg: ${entry.avgScore || 0}</span>
+                    <span class="player-clicks">Clicks: ${entry.totalClicks || 0}</span>
                 `;
                 leaderboardList.appendChild(li);
             });
