@@ -320,44 +320,31 @@
         let totalScore = parseInt(localStorage.getItem('totalScore')) || 0;
         let gamesPlayed = parseInt(localStorage.getItem('gamesPlayed')) || 0;
         let username = localStorage.getItem('username') || '';
-        let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+        let leaderboard = [];
 
-        // CPS tracking
-        let clickTimestamps = [];
+        // JSONBin.io configuration
+        const JSONBIN_API_KEY = '$2a$10$Hs/Oi9YPGtXgCJXQxW6Oqur5IfNnKEHxWR.tVD4HvXJRnxj3UoOGi'; // Read-only API key
+        const JSONBIN_BIN_ID = '65e4e2a8dc74654018a8c7c4';
+        const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 
-        function updateCPS() {
-            const now = Date.now();
-            clickTimestamps = clickTimestamps.filter(ts => now - ts <= 1000);
-            const cps = clickTimestamps.length;
-            document.getElementById('cps').textContent = `CPS: ${cps.toFixed(2)}`;
-        }
-        setInterval(updateCPS, 100);
-
-        // Check if username exists
-        if (username) {
-            document.getElementById('usernameModal').classList.add('hidden');
-            document.getElementById('playerInfo').textContent = `Player: ${username}`;
-        }
-
-        function submitUsername() {
-            const newUsername = document.getElementById('username').value.trim();
-            if (newUsername) {
-                username = newUsername;
-                localStorage.setItem('username', username);
-                document.getElementById('usernameModal').classList.add('hidden');
-                document.getElementById('playerInfo').textContent = `Player: ${username}`;
-                updateLeaderboard();
+        // Load global leaderboard
+        async function loadGlobalLeaderboard() {
+            try {
+                const response = await fetch(JSONBIN_URL, {
+                    headers: {
+                        'X-Master-Key': JSONBIN_API_KEY
+                    }
+                });
+                const data = await response.json();
+                leaderboard = data.record || [];
+                displayLeaderboard();
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
             }
         }
 
-        // Add enter key support for username input
-        document.getElementById('username').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                submitUsername();
-            }
-        });
-
-        function updateLeaderboard() {
+        // Update global leaderboard
+        async function updateGlobalLeaderboard() {
             if (!username) return;
 
             // Find existing entry for this user
@@ -380,12 +367,50 @@
             // Keep only top 10
             leaderboard = leaderboard.slice(0, 10);
 
-            // Save to localStorage
-            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            try {
+                // Update JSONBin
+                await fetch(JSONBIN_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_API_KEY
+                    },
+                    body: JSON.stringify(leaderboard)
+                });
+            } catch (error) {
+                console.error('Error updating leaderboard:', error);
+            }
 
             // Update display
             displayLeaderboard();
         }
+
+        // Load the global leaderboard when the page loads
+        loadGlobalLeaderboard();
+
+        // Check if username exists
+        if (username) {
+            document.getElementById('usernameModal').classList.add('hidden');
+            document.getElementById('playerInfo').textContent = `Player: ${username}`;
+        }
+
+        function submitUsername() {
+            const newUsername = document.getElementById('username').value.trim();
+            if (newUsername) {
+                username = newUsername;
+                localStorage.setItem('username', username);
+                document.getElementById('usernameModal').classList.add('hidden');
+                document.getElementById('playerInfo').textContent = `Player: ${username}`;
+                updateGlobalLeaderboard();
+            }
+        }
+
+        // Add enter key support for username input
+        document.getElementById('username').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitUsername();
+            }
+        });
 
         function displayLeaderboard() {
             const leaderboardList = document.getElementById('leaderboardList');
@@ -409,7 +434,7 @@
         displayLeaderboard();
 
         function incrementCounter() {
-            if (!username) return; // Prevent playing without username
+            if (!username) return;
 
             const button = document.querySelector('button');
             button.classList.remove('pop');
@@ -418,9 +443,6 @@
 
             count++;
             totalClicks++;
-
-            clickTimestamps.push(Date.now());
-            updateCPS();
 
             const counterElement = document.getElementById('counter');
             counterElement.textContent = count + '%';
@@ -456,7 +478,7 @@
                 localStorage.setItem('gamesPlayed', gamesPlayed);
                 document.getElementById('averageScore').textContent = (totalScore / gamesPlayed).toFixed(2);
 
-                updateLeaderboard();
+                updateGlobalLeaderboard();
 
                 count = 0;
                 counterElement.textContent = count + '%';
