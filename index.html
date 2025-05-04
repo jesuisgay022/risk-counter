@@ -443,7 +443,7 @@
         function displayLeaderboard() {
             const leaderboardList = document.getElementById('leaderboardList');
             leaderboardList.innerHTML = '';
-            const isAdmin = username === 'mrperrquet';
+            const isAdmin = username === 'mrperroquet';
             leaderboard.forEach((entry, index) => {
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
@@ -452,14 +452,14 @@
                     <td>${entry.highScore}%</td>
                     <td>${entry.avgScore || 0}</td>
                     <td>${entry.totalClicks || 0}</td>
-                    ${isAdmin && entry.name !== 'mrperrquet' ? `<td><button class='remove-btn' onclick="removePlayer('${entry.name}')">Remove</button></td>` : '<td></td>'}
+                    ${isAdmin && entry.name !== 'mrperroquet' ? `<td><button class='remove-btn' onclick="removePlayer('${entry.name}')">Remove</button></td>` : '<td></td>'}
                 `;
                 leaderboardList.appendChild(tr);
             });
         }
 
         function removePlayer(playerName) {
-            if (username !== 'mrperrquet') return;
+            if (username !== 'mrperroquet') return;
             if (!confirm(`Remove ${playerName} from the leaderboard?`)) return;
             database.ref('leaderboard/' + playerName).remove();
         }
