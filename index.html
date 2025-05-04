@@ -41,7 +41,7 @@
             right: 20px;
             top: 50%;
             transform: translateY(-50%);
-            width: 300px;
+            width: 400px;
             background-color: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
             padding: 20px;
@@ -287,6 +287,7 @@
             padding: 8px 6px;
             text-align: center;
             border-bottom: 1px solid #e0e0e0;
+            white-space: normal;
         }
         
         .leaderboard-table th {
@@ -379,6 +380,10 @@
                     <!-- Leaderboard entries will be inserted here -->
                 </tbody>
             </table>
+            <div id="adminActions" class="hidden">
+                <h3>Admin Actions</h3>
+                <button class="remove-btn" onclick="removePlayer('')">Remove Player</button>
+            </div>
         </div>
     </div>
 
@@ -448,6 +453,12 @@
                 `;
                 leaderboardList.appendChild(tr);
             });
+            const adminActions = document.getElementById('adminActions');
+            if (isAdmin) {
+                adminActions.classList.remove('hidden');
+            } else {
+                adminActions.classList.add('hidden');
+            }
         }
 
         function removePlayer(playerName) {
