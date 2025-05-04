@@ -287,9 +287,6 @@
             padding: 8px 6px;
             text-align: center;
             border-bottom: 1px solid #e0e0e0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
         
         .leaderboard-table th {
@@ -375,9 +372,7 @@
                         <th>#</th>
                         <th>Name</th>
                         <th>High Score</th>
-                        <th>Avg Score</th>
                         <th>Clicks</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="leaderboardList">
@@ -434,7 +429,6 @@
             database.ref('leaderboard/' + username).set({
                 name: username,
                 highScore: highScore,
-                avgScore: (totalScore / gamesPlayed).toFixed(2),
                 totalClicks: totalClicks
             });
         }
@@ -445,14 +439,12 @@
             leaderboardList.innerHTML = '';
             const isAdmin = username === 'mrperroquet';
             leaderboard.forEach((entry, index) => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${entry.name}</td>
                     <td>${entry.highScore}%</td>
-                    <td>${entry.avgScore || 0}</td>
                     <td>${entry.totalClicks || 0}</td>
-                    ${isAdmin && entry.name !== 'mrperroquet' ? `<td><button class='remove-btn' onclick="removePlayer('${entry.name}')">Remove</button></td>` : '<td></td>'}
                 `;
                 leaderboardList.appendChild(tr);
             });
