@@ -360,35 +360,31 @@
         .leaderboard-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 15px;
-            background: transparent;
-            table-layout: fixed;
+            margin-top: 20px;
         }
         
         .leaderboard-table th,
         .leaderboard-table td {
-            padding: 8px 6px;
-            text-align: center;
-            border-bottom: 1px solid #e0e0e0;
-            white-space: normal;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
         }
         
         .leaderboard-table th {
-            background: #f1f2f6;
+            font-weight: 600;
             color: #2d3436;
-            font-weight: 700;
-            font-size: 16px;
-            position: sticky;
-            top: 0;
-            z-index: 2;
-        }
-        
-        .leaderboard-table tr:nth-child(even) {
-            background: #f9f9f9;
         }
         
         .leaderboard-table tr:hover {
-            background: #dff9fb;
+            background-color: #f8f9fa;
+        }
+        
+        .leaderboard-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            vertical-align: middle;
+            margin-right: 8px;
         }
         
         .remove-btn {
@@ -460,7 +456,6 @@
                 <img id="userAvatar" class="user-avatar" src="" alt="User Avatar">
                 <div class="user-details">
                     <p class="user-name" id="userName"></p>
-                    <p class="user-discriminator" id="userDiscriminator"></p>
                 </div>
             </div>
             <div class="title-section">
@@ -486,23 +481,15 @@
             <table class="leaderboard-table">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Name</th>
+                        <th>Rank</th>
+                        <th>Player</th>
                         <th>High Score</th>
-                        <th>Clicks</th>
+                        <th>Total Clicks</th>
                     </tr>
                 </thead>
                 <tbody id="leaderboardList">
-                    <!-- Leaderboard entries will be inserted here -->
                 </tbody>
             </table>
-            <div id="adminActions" class="hidden">
-                <h3>Admin Actions</h3>
-                <select id="playerSelect">
-                    <option value="">Select a player to remove</option>
-                </select>
-                <button class="remove-btn" onclick="removeSelectedPlayer()">Remove Player</button>
-            </div>
         </div>
     </div>
 
@@ -606,16 +593,20 @@
 
         function updateUserUI(user) {
             currentUser = user;
+            // Save user to localStorage
+            localStorage.setItem('discordUser', JSON.stringify(user));
+
             document.getElementById('loginContainer').classList.add('hidden');
             document.getElementById('gameWrapper').classList.remove('hidden');
             document.getElementById('logoutBtn').classList.remove('hidden');
 
             document.getElementById('userAvatar').src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
             document.getElementById('userName').textContent = user.username;
-            document.getElementById('userDiscriminator').textContent = `#${user.discriminator}`;
 
             // Load user data
             loadUserData(user.id);
+            // Update leaderboard
+            updateLeaderboard();
         }
 
         function loadUserData(userId) {
@@ -633,18 +624,25 @@
         function saveUserData(userId) {
             if (!userId) return;
 
-            database.ref(`users/${userId}`).update({
+            const userData = {
                 highScore,
                 totalClicks,
                 totalScore,
                 gamesPlayed,
                 lastUpdate: Date.now()
+            };
+
+            database.ref(`users/${userId}`).update(userData).then(() => {
+                // Update leaderboard after saving
+                updateLeaderboard();
             });
         }
 
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
                 currentUser = null;
+                localStorage.removeItem('discordUser');
+
                 // Clear user data from Firebase
                 const userId = document.getElementById('userAvatar').src.split('/')[4];
                 if (userId) {
@@ -653,7 +651,6 @@
                     });
                 }
 
-                // Reload the page
                 window.location.reload();
             }
         }
@@ -678,6 +675,8 @@
 
         // Check for OAuth code on page load
         window.addEventListener('load', () => {
+            loadSavedUser();
+
             const urlParams = new URLSearchParams(window.location.search);
             const code = urlParams.get('code');
             if (code) {
@@ -760,12 +759,44 @@
             document.getElementById('averageScore').textContent = (totalScore / (gamesPlayed || 1)).toFixed(2);
         }
 
-        function removeSelectedPlayer() {
-            const playerSelect = document.getElementById('playerSelect');
-            const playerName = playerSelect.value;
-            if (!playerName) return;
-            if (!confirm(`Remove ${playerName} from the leaderboard?`)) return;
-            database.ref(`leaderboard/${playerName}`).remove();
+        function updateLeaderboard() {
+            database.ref('users').orderByChild('highScore').limitToLast(10).once('value', (snapshot) => {
+                const leaderboardList = document.getElementById('leaderboardList');
+                leaderboardList.innerHTML = '';
+
+                const users = [];
+                snapshot.forEach((childSnapshot) => {
+                    users.push(childSnapshot.val());
+                });
+
+                // Sort by high score in descending order
+                users.sort((a, b) => b.highScore - a.highScore);
+
+                users.forEach((user, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>
+                            <img src="https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png" 
+                                 alt="${user.username}" 
+                                 class="leaderboard-avatar">
+                            ${user.username}
+                        </td>
+                        <td>${user.highScore || 0}%</td>
+                        <td>${user.totalClicks || 0}</td>
+                    `;
+                    leaderboardList.appendChild(row);
+                });
+            });
+        }
+
+        // Load saved user data from localStorage
+        function loadSavedUser() {
+            const savedUser = localStorage.getItem('discordUser');
+            if (savedUser) {
+                const user = JSON.parse(savedUser);
+                updateUserUI(user);
+            }
         }
     </script>
 </body>
