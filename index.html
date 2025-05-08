@@ -85,6 +85,82 @@
             font-weight: 600;
         }
         
+        .discord-login-btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            background: #5865F2;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .discord-login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(88, 101, 242, 0.3);
+            background: #4752C4;
+        }
+        
+        .discord-login-btn img {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .login-container {
+            text-align: center;
+            padding: 30px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .login-container h2 {
+            margin: 0 0 20px 0;
+            color: #2d3436;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+        
+        .user-details {
+            text-align: left;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            color: #2d3436;
+            margin: 0;
+        }
+        
+        .user-discriminator {
+            color: #636e72;
+            margin: 0;
+            font-size: 14px;
+        }
+        
         .username-modal {
             position: fixed;
             top: 0;
@@ -361,22 +437,26 @@
 </head>
 
 <body>
-    <!-- Username Modal -->
-    <div id="usernameModal" class="username-modal">
-        <div class="username-modal-content">
-            <h2>Enter Your Username</h2>
-            <input type="text" id="username" class="username-input" placeholder="Enter your username" maxlength="10">
-            <div class="username-warning" id="usernameWarning">Max 10 characters allowed.</div>
-            <div class="username-taken" id="usernameTaken">This username is already taken.</div>
-            <button class="username-submit" onclick="_0x234()">Start Playing</button>
-        </div>
+    <!-- Login Container -->
+    <div id="loginContainer" class="login-container">
+        <h2>Welcome to Risk Counter</h2>
+        <button class="discord-login-btn" onclick="loginWithDiscord()">
+            <img src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_white_RGB.png" alt="Discord">
+            Login with Discord
+        </button>
     </div>
 
-    <button id="logoutBtn" class="logout-btn hidden" onclick="_0x567()">Logout</button>
+    <button id="logoutBtn" class="logout-btn hidden" onclick="logout()">Logout</button>
 
-    <div class="game-wrapper">
+    <div class="game-wrapper hidden" id="gameWrapper">
         <div class="container">
-            <div class="player-info" id="playerInfo"></div>
+            <div class="user-info">
+                <img id="userAvatar" class="user-avatar" src="" alt="User Avatar">
+                <div class="user-details">
+                    <p class="user-name" id="userName"></p>
+                    <p class="user-discriminator" id="userDiscriminator"></p>
+                </div>
+            </div>
             <div class="title-section">
                 <h1>Risk Counter</h1>
                 <p>Current chance of losing:</p>
@@ -386,7 +466,7 @@
                 <p>Average Score: <span id="averageScore">0</span>%</p>
                 <p>Total Clicks: <span id="totalClicks">0</span></p>
             </div>
-            <button id="riskButton" onclick="_0x456()">Take a Risk</button>
+            <button id="riskButton" onclick="takeRisk()">Take a Risk</button>
             <div class="percentage-container">
                 <div>
                     <div class="percentage" id="counter">0%</div>
@@ -423,10 +503,11 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <script>
         // Your web app's Firebase configuration
-        const _0x4f2d = {
+        const firebaseConfig = {
             apiKey: "AIzaSyBLD2LOinxjQ1Oi-nuR09FRcDM0xqW6I-U",
             authDomain: "risk-counter-leaderboard.firebaseapp.com",
             databaseURL: "https://risk-counter-leaderboard-default-rtdb.firebaseio.com",
@@ -438,242 +519,216 @@
         };
 
         // Initialize Firebase
-        firebase.initializeApp(_0x4f2d);
-        const _0x3e2f = firebase.database();
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
 
-        let _0x2a1b = 0;
-        let _0x1f3c = parseInt(localStorage.getItem('highScore')) || 0;
-        let _0x4d2e = parseInt(localStorage.getItem('totalClicks')) || 0;
-        let _0x5f1a = parseInt(localStorage.getItem('totalScore')) || 0;
-        let _0x3b2c = parseInt(localStorage.getItem('gamesPlayed')) || 0;
-        let _0x6e4d = localStorage.getItem('username') || '';
-        let _0x7f5b = [];
-        let _0x8a6c = 0;
-        let _0x9b7d = []; // Store click timestamps for CPS calculation
-        const _0xa8e = 99; // Maximum allowed percentage
+        let currentPercentage = 0;
+        let highScore = parseInt(localStorage.getItem('highScore')) || 0;
+        let totalClicks = parseInt(localStorage.getItem('totalClicks')) || 0;
+        let totalScore = parseInt(localStorage.getItem('totalScore')) || 0;
+        let gamesPlayed = parseInt(localStorage.getItem('gamesPlayed')) || 0;
+        let clickTimestamps = [];
+        let maxCPS = 0;
+        const MAX_PERCENTAGE = 99;
 
-        // Check if username exists in Firebase
-        function _0x678(username) {
-            return new Promise((resolve) => {
-                _0x3e2f.ref('leaderboard/' + username).once('value', (snapshot) => {
-                    resolve(snapshot.exists());
-                });
-            });
+        // Discord OAuth2 Configuration
+        const DISCORD_CLIENT_ID = 'YOUR_DISCORD_CLIENT_ID'; // Replace with your Discord client ID
+        const DISCORD_REDIRECT_URI = window.location.origin + window.location.pathname;
+        const DISCORD_SCOPES = 'identify';
+
+        function loginWithDiscord() {
+            const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}&response_type=code&scope=${DISCORD_SCOPES}`;
+            window.location.href = discordAuthUrl;
         }
 
-        // Validate high score against clicks
-        function _0xc1d(score, clicks) {
-            return clicks >= score;
-        }
+        // Handle Discord OAuth2 callback
+        async function handleDiscordCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
 
-        // Load leaderboard from Firebase
-        function _0xd2e() {
-            _0x3e2f.ref('leaderboard').on('value', (snapshot) => {
-                const data = snapshot.val() || {};
-                _0x7f5b = Object.values(data);
-                _0x7f5b.sort((a, b) => b.highScore - a.highScore);
-                _0x7f5b = _0x7f5b.slice(0, 10);
-                _0xe3f();
-            });
-        }
+            if (code) {
+                try {
+                    // Exchange code for token (this should be done server-side)
+                    const response = await fetch('/api/discord-token', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            code
+                        }),
+                    });
 
-        // Update leaderboard in Firebase with validation
-        function _0xf4g() {
-            if (!_0x6e4d) return;
+                    const data = await response.json();
 
-            // Validate high score
-            if (!_0xc1d(_0x1f3c, _0x4d2e)) {
-                _0x1f3c = _0x4d2e;
-                localStorage.setItem('highScore', _0x1f3c);
+                    // Create custom token for Firebase
+                    const customToken = await fetch('/api/firebase-token', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            access_token: data.access_token,
+                            user: data.user
+                        }),
+                    }).then(res => res.json());
+
+                    // Sign in to Firebase with custom token
+                    await auth.signInWithCustomToken(customToken.token);
+
+                    // Update UI
+                    updateUserUI(data.user);
+
+                    // Remove code from URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } catch (error) {
+                    console.error('Error during Discord authentication:', error);
+                }
             }
+        }
 
-            _0x3e2f.ref('leaderboard/' + _0x6e4d).set({
-                name: _0x6e4d,
-                highScore: _0x1f3c,
-                totalClicks: _0x4d2e,
+        function updateUserUI(user) {
+            document.getElementById('loginContainer').classList.add('hidden');
+            document.getElementById('gameWrapper').classList.remove('hidden');
+            document.getElementById('logoutBtn').classList.remove('hidden');
+
+            document.getElementById('userAvatar').src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+            document.getElementById('userName').textContent = user.username;
+            document.getElementById('userDiscriminator').textContent = `#${user.discriminator}`;
+
+            // Load user data
+            loadUserData(user.id);
+        }
+
+        function loadUserData(userId) {
+            database.ref(`users/${userId}`).once('value', (snapshot) => {
+                const data = snapshot.val() || {};
+                highScore = data.highScore || 0;
+                totalClicks = data.totalClicks || 0;
+                totalScore = data.totalScore || 0;
+                gamesPlayed = data.gamesPlayed || 0;
+
+                updateUI();
+            });
+        }
+
+        function saveUserData(userId) {
+            if (!userId) return;
+
+            database.ref(`users/${userId}`).set({
+                highScore,
+                totalClicks,
+                totalScore,
+                gamesPlayed,
                 lastUpdate: Date.now()
             });
         }
 
-        // Display leaderboard
-        function _0xe3f() {
-            const leaderboardList = document.getElementById('leaderboardList');
-            leaderboardList.innerHTML = '';
-            const isAdmin = _0x6e4d === 'mrperroquet';
-            _0x7f5b.forEach((entry, index) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${entry.name}</td>
-                    <td>${entry.highScore}%</td>
-                    <td>${entry.totalClicks || 0}</td>
-                `;
-                leaderboardList.appendChild(tr);
-            });
-            const adminActions = document.getElementById('adminActions');
-            if (isAdmin) {
-                adminActions.classList.remove('hidden');
-                const playerSelect = document.getElementById('playerSelect');
-                playerSelect.innerHTML = '<option value="">Select a player to remove</option>';
-                _0x7f5b.forEach(entry => {
-                    if (entry.name !== 'mrperroquet') {
-                        const option = document.createElement('option');
-                        option.value = entry.name;
-                        option.textContent = entry.name;
-                        playerSelect.appendChild(option);
-                    }
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                auth.signOut().then(() => {
+                    window.location.reload();
                 });
+            }
+        }
+
+        // Auth state observer
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in
+                handleDiscordCallback();
             } else {
-                adminActions.classList.add('hidden');
-            }
-        }
-
-        function _0x123() {
-            const playerSelect = document.getElementById('playerSelect');
-            const playerName = playerSelect.value;
-            if (!playerName) return;
-            if (!confirm(`Remove ${playerName} from the leaderboard?`)) return;
-            _0x3e2f.ref('leaderboard/' + playerName).remove();
-        }
-
-        // Call this on page load
-        _0xd2e();
-
-        // Check if username exists
-        if (_0x6e4d) {
-            document.getElementById('usernameModal').classList.add('hidden');
-            document.getElementById('playerInfo').textContent = `Player: ${_0x6e4d}`;
-            document.getElementById('logoutBtn').classList.remove('hidden');
-        }
-
-        // Username input enforcement
-        const usernameInput = document.getElementById('username');
-        const usernameWarning = document.getElementById('usernameWarning');
-        const usernameTaken = document.getElementById('usernameTaken');
-
-        usernameInput.addEventListener('input', function() {
-            if (this.value.length > 10) {
-                this.value = this.value.slice(0, 10);
-                usernameWarning.style.display = 'block';
-            } else {
-                usernameWarning.style.display = 'none';
-            }
-            usernameTaken.style.display = 'none';
-        });
-
-        async function _0x234() {
-            const newUsername = usernameInput.value.trim();
-            if (newUsername.length > 10) {
-                usernameWarning.style.display = 'block';
-                return;
-            }
-            usernameWarning.style.display = 'none';
-
-            if (newUsername) {
-                const exists = await _0x678(newUsername);
-                if (exists) {
-                    usernameTaken.style.display = 'block';
-                    return;
-                }
-
-                _0x6e4d = newUsername;
-                localStorage.setItem('username', _0x6e4d);
-                document.getElementById('usernameModal').classList.add('hidden');
-                document.getElementById('playerInfo').textContent = `Player: ${_0x6e4d}`;
-                document.getElementById('logoutBtn').classList.remove('hidden');
-            }
-        }
-
-        // Add enter key support for username input
-        document.getElementById('username').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                _0x234();
+                // User is signed out
+                document.getElementById('loginContainer').classList.remove('hidden');
+                document.getElementById('gameWrapper').classList.add('hidden');
+                document.getElementById('logoutBtn').classList.add('hidden');
             }
         });
 
         // Initialize display
-        document.getElementById('highScore').textContent = _0x1f3c;
-        document.getElementById('totalClicks').textContent = _0x4d2e;
-        document.getElementById('averageScore').textContent = (_0x5f1a / (_0x3b2c || 1)).toFixed(2);
+        document.getElementById('highScore').textContent = highScore;
+        document.getElementById('totalClicks').textContent = totalClicks;
+        document.getElementById('averageScore').textContent = (totalScore / (gamesPlayed || 1)).toFixed(2);
 
         // CPS tracking
-        function _0x345() {
+        function calculateCPS() {
             const now = Date.now();
-            _0x9b7d = _0x9b7d.filter(ts => now - ts <= 1000);
-            const cps = _0x9b7d.length;
-            if (cps > _0x8a6c) _0x8a6c = cps;
+            clickTimestamps = clickTimestamps.filter(ts => now - ts <= 1000);
+            const cps = clickTimestamps.length;
+            if (cps > maxCPS) maxCPS = cps;
             document.getElementById('cps').textContent = `CPS: ${cps.toFixed(2)}`;
         }
-        setInterval(_0x345, 100);
+        setInterval(calculateCPS, 100);
 
-        function _0x456() {
-            if (!_0x6e4d) return;
+        function takeRisk() {
+            if (!user) return;
 
             const button = document.getElementById('riskButton');
             button.classList.remove('pop');
             void button.offsetWidth;
             button.classList.add('pop');
 
-            _0x2a1b = Math.min(_0x2a1b + 1, _0xa8e); // Cap at maximum percentage
-            _0x4d2e++;
+            currentPercentage = Math.min(currentPercentage + 1, MAX_PERCENTAGE);
+            totalClicks++;
 
-            _0x9b7d.push(Date.now());
-            _0x345();
+            clickTimestamps.push(Date.now());
+            calculateCPS();
 
             const counterElement = document.getElementById('counter');
-            counterElement.textContent = _0x2a1b + '%';
+            counterElement.textContent = currentPercentage + '%';
 
-            const fontSize = Math.min(24 + (_0x2a1b * 2), 120);
+            const fontSize = Math.min(24 + (currentPercentage * 2), 120);
             counterElement.style.fontSize = fontSize + 'px';
 
-            const shakeIntensity = Math.min(_0x2a1b * 0.5, 5);
+            const shakeIntensity = Math.min(currentPercentage * 0.5, 5);
             counterElement.classList.remove('shake');
             void counterElement.offsetWidth;
             counterElement.classList.add('shake');
 
             const totalClicksElement = document.getElementById('totalClicks');
-            totalClicksElement.textContent = _0x4d2e;
+            totalClicksElement.textContent = totalClicks;
 
-            localStorage.setItem('totalClicks', _0x4d2e);
+            localStorage.setItem('totalClicks', totalClicks);
 
-            let array = new Uint32Array(1);
-            window.crypto.getRandomValues(array);
-            let randomNum = (array[0] % 100) + 1;
+            let randomNum = Math.floor(Math.random() * 100) + 1;
 
-            if (randomNum <= _0x2a1b) {
-                if (_0x2a1b > _0x1f3c && _0xc1d(_0x2a1b, _0x4d2e)) {
-                    _0x1f3c = _0x2a1b;
-                    localStorage.setItem('highScore', _0x1f3c);
+            if (randomNum <= currentPercentage) {
+                if (currentPercentage > highScore && randomNum <= MAX_PERCENTAGE) {
+                    highScore = currentPercentage;
+                    localStorage.setItem('highScore', highScore);
                     const highScoreElement = document.getElementById('highScore');
-                    highScoreElement.textContent = _0x1f3c;
+                    highScoreElement.textContent = highScore;
                 }
 
-                _0x5f1a += _0x2a1b;
-                _0x3b2c++;
-                localStorage.setItem('totalScore', _0x5f1a);
-                localStorage.setItem('gamesPlayed', _0x3b2c);
-                document.getElementById('averageScore').textContent = (_0x5f1a / _0x3b2c).toFixed(2);
+                totalScore += currentPercentage;
+                gamesPlayed++;
+                localStorage.setItem('totalScore', totalScore);
+                localStorage.setItem('gamesPlayed', gamesPlayed);
+                document.getElementById('averageScore').textContent = (totalScore / gamesPlayed).toFixed(2);
 
-                _0xf4g();
+                saveUserData(user.uid);
 
-                _0x2a1b = 0;
-                _0x8a6c = 0;
-                counterElement.textContent = _0x2a1b + '%';
+                currentPercentage = 0;
+                maxCPS = 0;
+                counterElement.textContent = currentPercentage + '%';
                 counterElement.style.fontSize = '24px';
                 counterElement.classList.remove('shake');
             }
         }
 
-        // Logout function
-        function _0x567() {
-            if (confirm('Are you sure you want to logout?')) {
-                localStorage.removeItem('username');
-                localStorage.removeItem('highScore');
-                localStorage.removeItem('totalClicks');
-                localStorage.removeItem('totalScore');
-                localStorage.removeItem('gamesPlayed');
-                window.location.reload();
-            }
+        function updateUI() {
+            document.getElementById('highScore').textContent = highScore;
+            document.getElementById('totalClicks').textContent = totalClicks;
+            document.getElementById('averageScore').textContent = (totalScore / (gamesPlayed || 1)).toFixed(2);
+        }
+
+        function removeSelectedPlayer() {
+            const playerSelect = document.getElementById('playerSelect');
+            const playerName = playerSelect.value;
+            if (!playerName) return;
+            if (!confirm(`Remove ${playerName} from the leaderboard?`)) return;
+            database.ref(`leaderboard/${playerName}`).remove();
         }
     </script>
 </body>
