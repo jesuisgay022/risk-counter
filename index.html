@@ -537,6 +537,7 @@
         let clickTimestamps = [];
         let maxCPS = 0;
         const MAX_PERCENTAGE = 99;
+        let currentUser = null;
 
         // Discord OAuth2 Configuration
         const DISCORD_CLIENT_ID = '1370074461780578304';
@@ -604,6 +605,7 @@
         }
 
         function updateUserUI(user) {
+            currentUser = user;
             document.getElementById('loginContainer').classList.add('hidden');
             document.getElementById('gameWrapper').classList.remove('hidden');
             document.getElementById('logoutBtn').classList.remove('hidden');
@@ -642,6 +644,7 @@
 
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
+                currentUser = null;
                 // Clear user data from Firebase
                 const userId = document.getElementById('userAvatar').src.split('/')[4];
                 if (userId) {
@@ -698,7 +701,10 @@
         setInterval(calculateCPS, 100);
 
         function takeRisk() {
-            if (!user) return;
+            if (!currentUser) {
+                console.log('No user logged in');
+                return;
+            }
 
             const button = document.getElementById('riskButton');
             button.classList.remove('pop');
@@ -725,25 +731,20 @@
             const totalClicksElement = document.getElementById('totalClicks');
             totalClicksElement.textContent = totalClicks;
 
-            localStorage.setItem('totalClicks', totalClicks);
-
             let randomNum = Math.floor(Math.random() * 100) + 1;
 
             if (randomNum <= currentPercentage) {
                 if (currentPercentage > highScore && randomNum <= MAX_PERCENTAGE) {
                     highScore = currentPercentage;
-                    localStorage.setItem('highScore', highScore);
                     const highScoreElement = document.getElementById('highScore');
                     highScoreElement.textContent = highScore;
                 }
 
                 totalScore += currentPercentage;
                 gamesPlayed++;
-                localStorage.setItem('totalScore', totalScore);
-                localStorage.setItem('gamesPlayed', gamesPlayed);
                 document.getElementById('averageScore').textContent = (totalScore / gamesPlayed).toFixed(2);
 
-                saveUserData(user.uid);
+                saveUserData(currentUser.id);
 
                 currentPercentage = 0;
                 maxCPS = 0;
