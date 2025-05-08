@@ -331,6 +331,13 @@
             display: none;
         }
         
+        .username-taken {
+            color: #e74c3c;
+            font-size: 13px;
+            margin-top: 5px;
+            display: none;
+        }
+        
         .logout-btn {
             position: absolute;
             top: 20px;
@@ -360,7 +367,8 @@
             <h2>Enter Your Username</h2>
             <input type="text" id="username" class="username-input" placeholder="Enter your username" maxlength="10">
             <div class="username-warning" id="usernameWarning">Max 10 characters allowed.</div>
-            <button class="username-submit" onclick="submitUsername()">Start Playing</button>
+            <div class="username-taken" id="usernameTaken">This username is already taken.</div>
+            <button class="username-submit" onclick="_0x234()">Start Playing</button>
         </div>
     </div>
 
@@ -378,7 +386,7 @@
                 <p>Average Score: <span id="averageScore">0</span>%</p>
                 <p>Total Clicks: <span id="totalClicks">0</span></p>
             </div>
-            <button onclick="incrementCounter()">Take a Risk</button>
+            <button id="riskButton" onclick="_0x456()">Take a Risk</button>
             <div class="percentage-container">
                 <div>
                     <div class="percentage" id="counter">0%</div>
@@ -443,6 +451,15 @@
         let _0x8a6c = 0;
         let _0x9b7d = []; // Store click timestamps for CPS calculation
         const _0xa8e = 99; // Maximum allowed percentage
+
+        // Check if username exists in Firebase
+        function _0x678(username) {
+            return new Promise((resolve) => {
+                _0x3e2f.ref('leaderboard/' + username).once('value', (snapshot) => {
+                    resolve(snapshot.exists());
+                });
+            });
+        }
 
         // Validate high score against clicks
         function _0xc1d(score, clicks) {
@@ -526,11 +543,14 @@
         if (_0x6e4d) {
             document.getElementById('usernameModal').classList.add('hidden');
             document.getElementById('playerInfo').textContent = `Player: ${_0x6e4d}`;
+            document.getElementById('logoutBtn').classList.remove('hidden');
         }
 
         // Username input enforcement
         const usernameInput = document.getElementById('username');
         const usernameWarning = document.getElementById('usernameWarning');
+        const usernameTaken = document.getElementById('usernameTaken');
+
         usernameInput.addEventListener('input', function() {
             if (this.value.length > 10) {
                 this.value = this.value.slice(0, 10);
@@ -538,20 +558,29 @@
             } else {
                 usernameWarning.style.display = 'none';
             }
+            usernameTaken.style.display = 'none';
         });
 
-        function _0x234() {
+        async function _0x234() {
             const newUsername = usernameInput.value.trim();
             if (newUsername.length > 10) {
                 usernameWarning.style.display = 'block';
                 return;
             }
             usernameWarning.style.display = 'none';
+
             if (newUsername) {
+                const exists = await _0x678(newUsername);
+                if (exists) {
+                    usernameTaken.style.display = 'block';
+                    return;
+                }
+
                 _0x6e4d = newUsername;
                 localStorage.setItem('username', _0x6e4d);
                 document.getElementById('usernameModal').classList.add('hidden');
                 document.getElementById('playerInfo').textContent = `Player: ${_0x6e4d}`;
+                document.getElementById('logoutBtn').classList.remove('hidden');
             }
         }
 
@@ -580,7 +609,7 @@
         function _0x456() {
             if (!_0x6e4d) return;
 
-            const button = document.querySelector('button');
+            const button = document.getElementById('riskButton');
             button.classList.remove('pop');
             void button.offsetWidth;
             button.classList.add('pop');
@@ -634,18 +663,6 @@
                 counterElement.classList.remove('shake');
             }
         }
-
-        // Add click event listener to the button
-        document.addEventListener('DOMContentLoaded', function() {
-            const button = document.querySelector('button');
-            button.addEventListener('click', _0x456);
-
-            // Show/hide logout button based on login status
-            const logoutBtn = document.getElementById('logoutBtn');
-            if (_0x6e4d) {
-                logoutBtn.classList.remove('hidden');
-            }
-        });
 
         // Logout function
         function _0x567() {
