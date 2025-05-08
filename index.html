@@ -540,6 +540,7 @@
 
         // Discord OAuth2 Configuration
         const DISCORD_CLIENT_ID = '1370074461780578304';
+        const DISCORD_CLIENT_SECRET = 'YOUR_CLIENT_SECRET'; // Get this from Discord Developer Portal
         const DISCORD_REDIRECT_URI = 'https://jesuisgay022.github.io/risk-counter/';
         const DISCORD_SCOPES = 'identify';
 
@@ -555,36 +556,44 @@
 
             if (code) {
                 try {
-                    // Exchange code for token (this should be done server-side)
-                    const response = await fetch('/api/discord-token', {
+                    // Get the Discord access token
+                    const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
+                            'Content-Type': 'application/x-www-form-urlencoded',
                         },
-                        body: JSON.stringify({
-                            code
+                        body: new URLSearchParams({
+                            client_id: DISCORD_CLIENT_ID,
+                            client_secret: DISCORD_CLIENT_SECRET,
+                            grant_type: 'authorization_code',
+                            code: code,
+                            redirect_uri: DISCORD_REDIRECT_URI,
                         }),
                     });
 
-                    const data = await response.json();
+                    const tokenData = await tokenResponse.json();
 
-                    // Create custom token for Firebase
-                    const customToken = await fetch('/api/firebase-token', {
-                        method: 'POST',
+                    // Get user info from Discord
+                    const userResponse = await fetch('https://discord.com/api/users/@me', {
                         headers: {
-                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${tokenData.access_token}`,
                         },
-                        body: JSON.stringify({
-                            access_token: data.access_token,
-                            user: data.user
-                        }),
-                    }).then(res => res.json());
+                    });
 
-                    // Sign in to Firebase with custom token
-                    await auth.signInWithCustomToken(customToken.token);
+                    const userData = await userResponse.json();
+
+                    // Create or update user in Firebase
+                    const userRef = database.ref(`users/${userData.id}`);
+                    await userRef.set({
+                        id: userData.id,
+                        username: userData.username,
+                        discriminator: userData.discriminator,
+                        avatar: userData.avatar,
+                        lastLogin: Date.now()
+                    });
 
                     // Update UI
-                    updateUserUI(data.user);
+                    updateUserUI(userData);
 
                     // Remove code from URL
                     window.history.replaceState({}, document.title, window.location.pathname);
@@ -622,7 +631,7 @@
         function saveUserData(userId) {
             if (!userId) return;
 
-            database.ref(`users/${userId}`).set({
+            database.ref(`users/${userId}`).update({
                 highScore,
                 totalClicks,
                 totalScore,
@@ -633,9 +642,16 @@
 
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
-                auth.signOut().then(() => {
-                    window.location.reload();
-                });
+                // Clear user data from Firebase
+                const userId = document.getElementById('userAvatar').src.split('/')[4];
+                if (userId) {
+                    database.ref(`users/${userId}`).update({
+                        lastLogout: Date.now()
+                    });
+                }
+
+                // Reload the page
+                window.location.reload();
             }
         }
 
