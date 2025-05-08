@@ -538,7 +538,7 @@
         const DISCORD_SCOPES = 'identify';
 
         function loginWithDiscord() {
-            const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}&response_type=code&scope=${DISCORD_SCOPES}`;
+            const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=1370074461780578304&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}&response_type=code&scope=identify`;
             window.location.href = discordAuthUrl;
         }
 
