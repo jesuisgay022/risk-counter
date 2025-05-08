@@ -396,7 +396,7 @@
 
     <script>
         // Your web app's Firebase configuration
-        const firebaseConfig = {
+        const _0x4f2d = {
             apiKey: "AIzaSyBLD2LOinxjQ1Oi-nuR09FRcDM0xqW6I-U",
             authDomain: "risk-counter-leaderboard.firebaseapp.com",
             databaseURL: "https://risk-counter-leaderboard-default-rtdb.firebaseio.com",
@@ -408,45 +408,60 @@
         };
 
         // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        firebase.initializeApp(_0x4f2d);
+        const _0x3e2f = firebase.database();
 
-        let count = 0;
-        let highScore = parseInt(localStorage.getItem('highScore')) || 0;
-        let totalClicks = parseInt(localStorage.getItem('totalClicks')) || 0;
-        let totalScore = parseInt(localStorage.getItem('totalScore')) || 0;
-        let gamesPlayed = parseInt(localStorage.getItem('gamesPlayed')) || 0;
-        let username = localStorage.getItem('username') || '';
-        let leaderboard = [];
-        let maxCPS = 0;
+        let _0x2a1b = 0;
+        let _0x1f3c = parseInt(localStorage.getItem('highScore')) || 0;
+        let _0x4d2e = parseInt(localStorage.getItem('totalClicks')) || 0;
+        let _0x5f1a = parseInt(localStorage.getItem('totalScore')) || 0;
+        let _0x3b2c = parseInt(localStorage.getItem('gamesPlayed')) || 0;
+        let _0x6e4d = localStorage.getItem('username') || '';
+        let _0x7f5b = [];
+        let _0x8a6c = 0;
+        let _0x9b7d = []; // Store click timestamps for CPS calculation
+        const _0xa8e = 99; // Maximum allowed percentage
+
+        // Validate high score against clicks
+        function _0xc1d(score, clicks) {
+            return clicks >= score;
+        }
 
         // Load leaderboard from Firebase
-        function loadLeaderboard() {
-            database.ref('leaderboard').on('value', (snapshot) => {
+        function _0xd2e() {
+            _0x3e2f.ref('leaderboard').on('value', (snapshot) => {
                 const data = snapshot.val() || {};
-                leaderboard = Object.values(data);
-                leaderboard.sort((a, b) => b.highScore - a.highScore);
-                leaderboard = leaderboard.slice(0, 10);
-                displayLeaderboard();
+                _0x7f5b = Object.values(data);
+                _0x7f5b.sort((a, b) => b.highScore - a.highScore);
+                _0x7f5b = _0x7f5b.slice(0, 10);
+                _0xe3f();
             });
         }
 
-        // Update leaderboard in Firebase
-        function updateLeaderboard() {
-            if (!username) return;
-            database.ref('leaderboard/' + username).set({
-                name: username,
-                highScore: highScore,
-                totalClicks: totalClicks
+        // Update leaderboard in Firebase with validation
+        function _0xf4g() {
+            if (!_0x6e4d) return;
+
+            // Validate high score
+            if (!_0xc1d(_0x1f3c, _0x4d2e)) {
+                _0x1f3c = _0x4d2e;
+                localStorage.setItem('highScore', _0x1f3c);
+            }
+
+            _0x3e2f.ref('leaderboard/' + _0x6e4d).set({
+                name: _0x6e4d,
+                highScore: _0x1f3c,
+                totalClicks: _0x4d2e,
+                lastUpdate: Date.now()
             });
         }
 
         // Display leaderboard
-        function displayLeaderboard() {
+        function _0xe3f() {
             const leaderboardList = document.getElementById('leaderboardList');
             leaderboardList.innerHTML = '';
-            const isAdmin = username === 'mrperroquet';
-            leaderboard.forEach((entry, index) => {
+            const isAdmin = _0x6e4d === 'mrperroquet';
+            _0x7f5b.forEach((entry, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${index + 1}</td>
@@ -461,7 +476,7 @@
                 adminActions.classList.remove('hidden');
                 const playerSelect = document.getElementById('playerSelect');
                 playerSelect.innerHTML = '<option value="">Select a player to remove</option>';
-                leaderboard.forEach(entry => {
+                _0x7f5b.forEach(entry => {
                     if (entry.name !== 'mrperroquet') {
                         const option = document.createElement('option');
                         option.value = entry.name;
@@ -474,21 +489,21 @@
             }
         }
 
-        function removeSelectedPlayer() {
+        function _0x123() {
             const playerSelect = document.getElementById('playerSelect');
             const playerName = playerSelect.value;
             if (!playerName) return;
             if (!confirm(`Remove ${playerName} from the leaderboard?`)) return;
-            database.ref('leaderboard/' + playerName).remove();
+            _0x3e2f.ref('leaderboard/' + playerName).remove();
         }
 
         // Call this on page load
-        loadLeaderboard();
+        _0xd2e();
 
         // Check if username exists
-        if (username) {
+        if (_0x6e4d) {
             document.getElementById('usernameModal').classList.add('hidden');
-            document.getElementById('playerInfo').textContent = `Player: ${username}`;
+            document.getElementById('playerInfo').textContent = `Player: ${_0x6e4d}`;
         }
 
         // Username input enforcement
@@ -503,7 +518,7 @@
             }
         });
 
-        function submitUsername() {
+        function _0x234() {
             const newUsername = usernameInput.value.trim();
             if (newUsername.length > 10) {
                 usernameWarning.style.display = 'block';
@@ -511,94 +526,95 @@
             }
             usernameWarning.style.display = 'none';
             if (newUsername) {
-                username = newUsername;
-                localStorage.setItem('username', username);
+                _0x6e4d = newUsername;
+                localStorage.setItem('username', _0x6e4d);
                 document.getElementById('usernameModal').classList.add('hidden');
-                document.getElementById('playerInfo').textContent = `Player: ${username}`;
+                document.getElementById('playerInfo').textContent = `Player: ${_0x6e4d}`;
             }
         }
 
         // Add enter key support for username input
         document.getElementById('username').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                submitUsername();
+                _0x234();
             }
         });
 
         // Initialize display
-        document.getElementById('highScore').textContent = highScore;
-        document.getElementById('totalClicks').textContent = totalClicks;
-        document.getElementById('averageScore').textContent = (totalScore / (gamesPlayed || 1)).toFixed(2);
+        document.getElementById('highScore').textContent = _0x1f3c;
+        document.getElementById('totalClicks').textContent = _0x4d2e;
+        document.getElementById('averageScore').textContent = (_0x5f1a / (_0x3b2c || 1)).toFixed(2);
 
         // CPS tracking
-        let clickTimestamps = [];
-
-        function updateCPS() {
+        function _0x345() {
             const now = Date.now();
-            clickTimestamps = clickTimestamps.filter(ts => now - ts <= 1000);
-            const cps = clickTimestamps.length;
-            if (cps > maxCPS) maxCPS = cps;
+            _0x9b7d = _0x9b7d.filter(ts => now - ts <= 1000);
+            const cps = _0x9b7d.length;
+            if (cps > _0x8a6c) _0x8a6c = cps;
             document.getElementById('cps').textContent = `CPS: ${cps.toFixed(2)}`;
         }
-        setInterval(updateCPS, 100);
+        setInterval(_0x345, 100);
 
-        function incrementCounter() {
-            if (!username) return;
+        function _0x456() {
+            if (!_0x6e4d) return;
 
             const button = document.querySelector('button');
             button.classList.remove('pop');
             void button.offsetWidth;
             button.classList.add('pop');
 
-            count++;
-            totalClicks++;
+            _0x2a1b = Math.min(_0x2a1b + 1, _0xa8e); // Cap at maximum percentage
+            _0x4d2e++;
 
-            clickTimestamps.push(Date.now());
-            updateCPS();
+            _0x9b7d.push(Date.now());
+            _0x345();
 
             const counterElement = document.getElementById('counter');
-            counterElement.textContent = count + '%';
+            counterElement.textContent = _0x2a1b + '%';
 
-            const fontSize = Math.min(24 + (count * 2), 120);
+            const fontSize = Math.min(24 + (_0x2a1b * 2), 120);
             counterElement.style.fontSize = fontSize + 'px';
 
-            const shakeIntensity = Math.min(count * 0.5, 5);
+            const shakeIntensity = Math.min(_0x2a1b * 0.5, 5);
             counterElement.classList.remove('shake');
             void counterElement.offsetWidth;
             counterElement.classList.add('shake');
 
             const totalClicksElement = document.getElementById('totalClicks');
-            totalClicksElement.textContent = totalClicks;
+            totalClicksElement.textContent = _0x4d2e;
 
-            localStorage.setItem('totalClicks', totalClicks);
+            localStorage.setItem('totalClicks', _0x4d2e);
 
             let array = new Uint32Array(1);
             window.crypto.getRandomValues(array);
             let randomNum = (array[0] % 100) + 1;
 
-            if (randomNum <= count) {
-                if (count > highScore) {
-                    highScore = count;
-                    localStorage.setItem('highScore', highScore);
+            if (randomNum <= _0x2a1b) {
+                if (_0x2a1b > _0x1f3c && _0xc1d(_0x2a1b, _0x4d2e)) {
+                    _0x1f3c = _0x2a1b;
+                    localStorage.setItem('highScore', _0x1f3c);
                     const highScoreElement = document.getElementById('highScore');
-                    highScoreElement.textContent = highScore;
+                    highScoreElement.textContent = _0x1f3c;
                 }
 
-                totalScore += count;
-                gamesPlayed++;
-                localStorage.setItem('totalScore', totalScore);
-                localStorage.setItem('gamesPlayed', gamesPlayed);
-                document.getElementById('averageScore').textContent = (totalScore / gamesPlayed).toFixed(2);
+                _0x5f1a += _0x2a1b;
+                _0x3b2c++;
+                localStorage.setItem('totalScore', _0x5f1a);
+                localStorage.setItem('gamesPlayed', _0x3b2c);
+                document.getElementById('averageScore').textContent = (_0x5f1a / _0x3b2c).toFixed(2);
 
-                updateLeaderboard();
+                _0xf4g();
 
-                count = 0;
-                maxCPS = 0;
-                counterElement.textContent = count + '%';
+                _0x2a1b = 0;
+                _0x8a6c = 0;
+                counterElement.textContent = _0x2a1b + '%';
                 counterElement.style.fontSize = '24px';
                 counterElement.classList.remove('shake');
             }
         }
+
+        // Update button click handler
+        document.querySelector('button').onclick = _0x456;
     </script>
 </body>
 
