@@ -99,6 +99,8 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            width: 100%;
+            justify-content: center;
         }
         
         .discord-login-btn:hover {
@@ -113,6 +115,10 @@
         }
         
         .login-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             text-align: center;
             padding: 30px;
             background-color: rgba(255, 255, 255, 0.95);
@@ -125,6 +131,7 @@
             align-items: center;
             justify-content: center;
             backdrop-filter: blur(10px);
+            z-index: 1000;
         }
         
         .login-container h2 {
@@ -441,7 +448,6 @@
     <div id="loginContainer" class="login-container">
         <h2>Welcome to Risk Counter</h2>
         <button class="discord-login-btn" onclick="loginWithDiscord()">
-            <img src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_white_RGB.png" alt="Discord">
             Login with Discord
         </button>
     </div>
@@ -637,12 +643,26 @@
         auth.onAuthStateChanged((user) => {
             if (user) {
                 // User is signed in
-                handleDiscordCallback();
+                document.getElementById('loginContainer').classList.add('hidden');
+                document.getElementById('gameWrapper').classList.remove('hidden');
+                document.getElementById('logoutBtn').classList.remove('hidden');
+
+                // Load user data
+                loadUserData(user.uid);
             } else {
                 // User is signed out
                 document.getElementById('loginContainer').classList.remove('hidden');
                 document.getElementById('gameWrapper').classList.add('hidden');
                 document.getElementById('logoutBtn').classList.add('hidden');
+            }
+        });
+
+        // Check for OAuth code on page load
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            if (code) {
+                handleDiscordCallback();
             }
         });
 
