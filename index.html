@@ -3,6 +3,7 @@
 
 <head>
     <title>Risk Counter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body {
@@ -21,9 +22,11 @@
         .game-wrapper {
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             min-height: 100vh;
             padding: 20px;
+            gap: 20px;
+            flex-wrap: wrap;
         }
         
         .container {
@@ -39,7 +42,7 @@
             align-items: center;
             justify-content: center;
             backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
+            margin: 0 auto;
         }
         
         body.dark-mode .container {
@@ -51,7 +54,10 @@
         body.dark-mode .container h1,
         body.dark-mode .container .stats p,
         body.dark-mode .container .user-name,
-        body.dark-mode .container .user-details p {
+        body.dark-mode .container .user-details p,
+        body.dark-mode #highScore,
+        body.dark-mode #totalClicks,
+        body.dark-mode #averageScore {
             color: #f5f6fa;
         }
         
@@ -64,20 +70,16 @@
         }
         
         .leaderboard {
-            position: fixed;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 400px;
+            position: relative;
+            width: 100%;
+            max-width: 400px;
             background-color: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
             padding: 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             max-height: 80vh;
             overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #b2bec3 #f1f2f6;
-            transition: all 0.3s ease;
+            margin: 0 auto;
         }
         
         body.dark-mode .leaderboard {
@@ -143,7 +145,7 @@
         .discord-login-btn {
             padding: 12px 30px;
             font-size: 16px;
-            background: #5865F2;
+            background: #7289da;
             color: white;
             border: none;
             border-radius: 12px;
@@ -407,9 +409,11 @@
         }
         
         #highScore,
-        #totalClicks {
+        #totalClicks,
+        #averageScore {
             font-weight: 600;
             color: #2d3436;
+            transition: color 0.3s ease;
         }
         
         .leaderboard-table {
@@ -472,10 +476,47 @@
             display: none;
         }
         
-        .logout-btn {
+        .controls-wrapper {
             position: fixed;
             bottom: 20px;
-            right: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 0 20px;
+            z-index: 1000;
+        }
+        
+        .volume-control {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .theme-toggle {
+            position: relative;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .logout-btn {
+            position: relative;
             padding: 12px 24px;
             background: rgba(231, 76, 60, 0.9);
             color: white;
@@ -492,79 +533,119 @@
             box-shadow: 0 4px 15px rgba(231, 76, 60, 0.2);
         }
         
-        .logout-btn:hover {
-            background: rgba(192, 57, 43, 0.9);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+        @media (min-width: 1024px) {
+            .controls-wrapper {
+                flex-direction: column;
+                align-items: flex-start;
+                left: 20px;
+                right: auto;
+                top: 20px;
+                bottom: auto;
+            }
+            .volume-control {
+                order: 2;
+            }
+            .theme-toggle {
+                order: 1;
+            }
+            .logout-btn {
+                order: 3;
+            }
         }
         
-        .logout-btn svg {
-            width: 16px;
-            height: 16px;
-            fill: currentColor;
+        @media (max-width: 480px) {
+            .controls-wrapper {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+                padding: 0 10px;
+            }
+            .volume-control {
+                flex: 1;
+                min-width: 140px;
+                justify-content: center;
+            }
+            .volume-slider {
+                width: 80px;
+            }
+            .logout-btn {
+                padding: 10px 20px;
+            }
+        }
+        /* Touch device optimizations */
+        
+        @media (hover: none) {
+            button {
+                -webkit-tap-highlight-color: transparent;
+            }
+            button:active {
+                transform: scale(0.95);
+            }
+        }
+        /* Prevent text selection on mobile */
+        
+        * {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        /* Improve scrolling on mobile */
+        
+        .leaderboard {
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+        /* Fix button active states for mobile */
+        
+        button:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
         }
         
-        body.dark-mode .logout-btn {
-            background: rgba(231, 76, 60, 0.8);
-        }
-        
-        body.dark-mode .logout-btn:hover {
-            background: rgba(192, 57, 43, 0.8);
-        }
-        
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.1);
+        .guest-login-btn {
+            padding: 10px 24px;
+            font-size: 14px;
+            background: #95a5a6;
+            color: white;
             border: none;
-            border-radius: 50%;
+            border-radius: 12px;
             cursor: pointer;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             transition: all 0.3s ease;
-            z-index: 1000;
-        }
-        
-        body.dark-mode .theme-toggle {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        
-        .theme-toggle:hover {
-            transform: scale(1.1);
-        }
-        
-        .theme-toggle svg {
-            width: 20px;
-            height: 20px;
-            fill: #2d3436;
-            transition: all 0.3s ease;
-        }
-        
-        body.dark-mode .theme-toggle svg {
-            fill: #f5f6fa;
-        }
-        
-        .volume-control {
-            position: fixed;
-            top: 20px;
-            right: 20px;
+            font-weight: 600;
+            margin-top: 10px;
+            width: 80%;
             display: flex;
             align-items: center;
             gap: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 8px 15px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            z-index: 1000;
+            justify-content: center;
         }
         
-        body.dark-mode .volume-control {
-            background: rgba(255, 255, 255, 0.1);
+        .guest-login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(149, 165, 166, 0.3);
+            background: #7f8c8d;
+        }
+        
+        .guest-warning {
+            font-style: italic;
+            color: #7f8c8d;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        
+        body.dark-mode .guest-login-btn {
+            background: #7f8c8d;
+        }
+        
+        body.dark-mode .guest-login-btn:hover {
+            background: #6c7a7d;
+        }
+        
+        body.dark-mode .guest-warning {
+            color: #95a5a6;
         }
         
         .volume-control svg {
@@ -606,42 +687,130 @@
             transform: scale(1.2);
         }
         
-        body.dark-mode .volume-slider::-webkit-slider-thumb {
+        .volume-slider::-webkit-slider-thumb:active {
             background: #74b9ff;
+        }
+        
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+        
+        .theme-toggle svg {
+            width: 20px;
+            height: 20px;
+            fill: #2d3436;
+            transition: all 0.3s ease;
+        }
+        
+        body.dark-mode .theme-toggle svg {
+            fill: #f5f6fa;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(192, 57, 43, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+        }
+        
+        .logout-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+        
+        body.dark-mode .logout-btn {
+            background: rgba(231, 76, 60, 0.8);
+        }
+        
+        body.dark-mode .logout-btn:hover {
+            background: rgba(192, 57, 43, 0.8);
+        }
+        
+        @media (min-width: 1024px) {
+            .leaderboard {
+                position: fixed;
+                right: 20px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 400px;
+                margin: 0;
+            }
+            .game-wrapper {
+                justify-content: center;
+                align-items: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                width: 100%;
+                max-width: 300px;
+                padding: 20px;
+                min-height: auto;
+            }
+            .percentage {
+                font-size: 36px !important;
+            }
+            button {
+                padding: 12px 24px !important;
+            }
+            .stats {
+                margin: 30px 0 15px 0 !important;
+            }
+            .title-section {
+                margin-bottom: 40px !important;
+            }
+            .leaderboard-table {
+                font-size: 14px;
+            }
+            .leaderboard-avatar {
+                width: 24px !important;
+                height: 24px !important;
+            }
         }
     </style>
 </head>
 
 <body>
-    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"/>
-        </svg>
-    </button>
+    <div class="controls-wrapper">
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"/>
+            </svg>
+        </button>
 
-    <div class="volume-control">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M11.5 4.5a.75.75 0 00-1.264-.546L5.203 8H2.667a.75.75 0 00-.75.75v6.5c0 .414.336.75.75.75h2.536l4.033 4.046A.75.75 0 0011.5 19.5v-15zM6.797 9.5l3.953-3.953v11.906L6.797 14.5H3.417v-5h3.38z"/>
-            <path d="M13.743 7.257a.75.75 0 00-1.061 1.061 6.5 6.5 0 010 9.192.75.75 0 101.06 1.06 8 8 0 000-11.313z"/>
-            <path d="M15.657 5.404a.75.75 0 00-1.06 1.06 9.5 9.5 0 010 13.436.75.75 0 001.06 1.06 11 11 0 000-15.556z"/>
-        </svg>
-        <input type="range" class="volume-slider" min="0" max="100" value="30" oninput="updateVolume(this.value)">
+        <div class="volume-control">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M11.5 4.5a.75.75 0 00-1.264-.546L5.203 8H2.667a.75.75 0 00-.75.75v6.5c0 .414.336.75.75.75h2.536l4.033 4.046A.75.75 0 0011.5 19.5v-15zM6.797 9.5l3.953-3.953v11.906L6.797 14.5H3.417v-5h3.38z"/>
+                <path d="M13.743 7.257a.75.75 0 00-1.061 1.061 6.5 6.5 0 010 9.192.75.75 0 101.06 1.06 8 8 0 000-11.313z"/>
+                <path d="M15.657 5.404a.75.75 0 00-1.06 1.06 9.5 9.5 0 010 13.436.75.75 0 001.06 1.06 11 11 0 000-15.556z"/>
+            </svg>
+            <input type="range" class="volume-slider" min="0" max="100" value="30" oninput="updateVolume(this.value)">
+        </div>
+
+        <button id="logoutBtn" class="logout-btn hidden" onclick="logout()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M16.5 3.75a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V4.5a.75.75 0 01.75-.75zM11.25 4.5a.75.75 0 01.75.75v14.25a.75.75 0 01-1.5 0V5.25a.75.75 0 01.75-.75zM5.25 4.5a.75.75 0 01.75.75v14.25a.75.75 0 01-1.5 0V5.25a.75.75 0 01.75-.75z"/>
+            </svg>
+            Logout
+        </button>
     </div>
 
     <!-- Login Container -->
     <div id="loginContainer" class="login-container">
         <h2>Welcome to Risk Counter</h2>
-        <button class="discord-login-btn" onclick="loginWithDiscord()">
+        <button class="discord-login-btn" onclick="loginWithDiscord()" style="background: #7289da;">
+            <img src="https://freepnglogo.com/images/all_img/1708701266discord-logo-transparent.png" alt="Discord Logo" style="height: 32px; width: 42.43px; margin-right: 8px; filter: drop-shadow(0 0 2px #000);">
             Login with Discord
         </button>
+        <button class="guest-login-btn" onclick="loginAsGuest()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+            </svg>
+            Play as Guest
+        </button>
+        <p class="guest-warning">Playing as a guest will not save your progress</p>
     </div>
-
-    <button id="logoutBtn" class="logout-btn hidden" onclick="logout()">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M16.5 3.75a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V4.5a.75.75 0 01.75-.75zM11.25 4.5a.75.75 0 01.75.75v14.25a.75.75 0 01-1.5 0V5.25a.75.75 0 01.75-.75zM5.25 4.5a.75.75 0 01.75.75v14.25a.75.75 0 01-1.5 0V5.25a.75.75 0 01.75-.75z"/>
-        </svg>
-        Logout
-    </button>
 
     <div class="game-wrapper hidden" id="gameWrapper">
         <div class="container">
@@ -726,8 +895,13 @@
         const DISCORD_SCOPES = 'identify';
 
         // Add at the beginning of your script section
-        const clickSound = new Audio('https://assets.mixkit.co/active_storage/sfx/212/212-preview.mp3');
+        const clickSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
         clickSound.volume = 0.3;
+
+        // Add error handling for sound loading
+        clickSound.onerror = function() {
+            console.error('Error loading sound:', clickSound.error);
+        };
 
         function updateVolume(value) {
             const volume = value / 100;
@@ -754,6 +928,7 @@
 
         function loginWithDiscord() {
             const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=1370074461780578304&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}&response_type=code&scope=identify`;
+            alert('By logging in and playing, you agree to have your username, score, and profile picture displayed on the leaderboard.');
             window.location.href = discordAuthUrl;
         }
 
@@ -817,6 +992,34 @@
             }
         }
 
+        function loginAsGuest() {
+            currentUser = {
+                id: 'guest-' + Math.random().toString(36).substr(2, 9),
+                username: 'Guest',
+                avatar: 'default',
+                isGuest: true
+            };
+
+            document.getElementById('loginContainer').classList.add('hidden');
+            document.getElementById('gameWrapper').classList.remove('hidden');
+            document.getElementById('logoutBtn').classList.remove('hidden');
+
+            // Set up guest UI
+            document.getElementById('userAvatar').src = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+            document.getElementById('userName').textContent = 'Guest';
+
+            // Reset game state
+            highScore = 0;
+            totalClicks = 0;
+            totalScore = 0;
+            gamesPlayed = 0;
+            currentPercentage = 0;
+            updateUI();
+
+            // Refresh leaderboard immediately
+            updateLeaderboard();
+        }
+
         function updateUserUI(user) {
             currentUser = user;
 
@@ -824,12 +1027,25 @@
             document.getElementById('gameWrapper').classList.remove('hidden');
             document.getElementById('logoutBtn').classList.remove('hidden');
 
-            document.getElementById('userAvatar').src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+            document.getElementById('userAvatar').src = user.isGuest ?
+                'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y' :
+                `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
             document.getElementById('userName').textContent = user.username;
 
-            // Load user data
-            loadUserData(user.id);
-            // Update leaderboard
+            // Only load user data if not a guest
+            if (!user.isGuest) {
+                loadUserData(user.id);
+            } else {
+                // Reset stats for guest users
+                highScore = 0;
+                totalClicks = 0;
+                totalScore = 0;
+                gamesPlayed = 0;
+                currentPercentage = 0;
+                updateUI();
+            }
+
+            // Always refresh leaderboard on login
             updateLeaderboard();
         }
 
@@ -850,7 +1066,7 @@
         }
 
         function saveUserData(userId) {
-            if (!userId) return;
+            if (!userId || currentUser.isGuest) return;
 
             const userData = {
                 highScore,
@@ -1026,11 +1242,15 @@
 
                 const users = [];
                 snapshot.forEach((childSnapshot) => {
-                    users.push(childSnapshot.val());
+                    const userData = childSnapshot.val();
+                    // Only include non-guest users
+                    if (userData && userData.id && !userData.id.startsWith('guest-')) {
+                        users.push(userData);
+                    }
                 });
 
                 // Sort by high score in descending order
-                users.sort((a, b) => b.highScore - a.highScore);
+                users.sort((a, b) => (b.highScore || 0) - (a.highScore || 0));
 
                 users.forEach((user, index) => {
                     const row = document.createElement('tr');
@@ -1039,7 +1259,8 @@
                         <td>
                             <img src="https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png" 
                                  alt="${user.username}" 
-                                 class="leaderboard-avatar">
+                                 class="leaderboard-avatar"
+                                 onerror="this.src='https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'">
                             ${user.username}
                         </td>
                         <td>${user.highScore || 0}%</td>
@@ -1047,6 +1268,17 @@
                     `;
                     leaderboardList.appendChild(row);
                 });
+
+                // If no users in leaderboard, show a message
+                if (users.length === 0) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td colspan="4" style="text-align: center; padding: 20px;">
+                            No scores yet. Be the first to login and play!
+                        </td>
+                    `;
+                    leaderboardList.appendChild(row);
+                }
             });
         }
 
