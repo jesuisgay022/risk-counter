@@ -473,23 +473,43 @@
         }
         
         .logout-btn {
-            position: absolute;
-            top: 20px;
+            position: fixed;
+            bottom: 20px;
             right: 20px;
-            padding: 8px 16px;
-            background: #e74c3c;
+            padding: 12px 24px;
+            background: rgba(231, 76, 60, 0.9);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
             transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.2);
         }
         
         .logout-btn:hover {
-            background: #c0392b;
+            background: rgba(192, 57, 43, 0.9);
             transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+        }
+        
+        .logout-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+        
+        body.dark-mode .logout-btn {
+            background: rgba(231, 76, 60, 0.8);
+        }
+        
+        body.dark-mode .logout-btn:hover {
+            background: rgba(192, 57, 43, 0.8);
         }
         
         .theme-toggle {
@@ -616,7 +636,12 @@
         </button>
     </div>
 
-    <button id="logoutBtn" class="logout-btn hidden" onclick="logout()">Logout</button>
+    <button id="logoutBtn" class="logout-btn hidden" onclick="logout()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M16.5 3.75a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V4.5a.75.75 0 01.75-.75zM11.25 4.5a.75.75 0 01.75.75v14.25a.75.75 0 01-1.5 0V5.25a.75.75 0 01.75-.75zM5.25 4.5a.75.75 0 01.75.75v14.25a.75.75 0 01-1.5 0V5.25a.75.75 0 01.75-.75z"/>
+        </svg>
+        Logout
+    </button>
 
     <div class="game-wrapper hidden" id="gameWrapper">
         <div class="container">
