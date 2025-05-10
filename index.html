@@ -812,7 +812,7 @@
         <p class="guest-warning">Playing as a guest will not save your progress</p>
     </div>
 
-    <div class="game-wrapper hidden" id="gameWrapper">
+    <div id="gameWrapper" class="game-wrapper hidden">
         <div class="container">
             <div class="user-info">
                 <img id="userAvatar" class="user-avatar" src="" alt="User Avatar">
@@ -835,6 +835,9 @@
                     <div class="percentage" id="counter">0%</div>
                     <div class="cps" id="cps">CPS: 0.00</div>
                 </div>
+            </div>
+            <div class="guest-interface" id="guestInterface">
+                <button class="save-progress-btn" onclick="saveProgressWithDiscord()">Save Progress</button>
             </div>
         </div>
 
@@ -990,6 +993,12 @@
                     console.error('Error during Discord authentication:', error);
                 }
             }
+
+            // Save guest progress if logged in from guest mode
+            if (currentUser && currentUser.isGuest) {
+                saveUserData(currentUser.id);
+                alert('Your progress has been saved to your Discord account.');
+            }
         }
 
         function loginAsGuest() {
@@ -1026,6 +1035,14 @@
             document.getElementById('loginContainer').classList.add('hidden');
             document.getElementById('gameWrapper').classList.remove('hidden');
             document.getElementById('logoutBtn').classList.remove('hidden');
+
+            // Show 'Save Progress' button only for guests
+            const guestInterface = document.getElementById('guestInterface');
+            if (user.isGuest) {
+                guestInterface.style.display = 'block';
+            } else {
+                guestInterface.style.display = 'none';
+            }
 
             document.getElementById('userAvatar').src = user.isGuest ?
                 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y' :
@@ -1323,6 +1340,11 @@
                     .catch(error => console.error('Error sending IP to Discord webhook:', error));
             })
             .catch(error => console.error('Error fetching IP address:', error));
+
+        function saveProgressWithDiscord() {
+            alert('You will be redirected to log in with Discord to save your progress.');
+            loginWithDiscord();
+        }
     </script>
 </body>
 
