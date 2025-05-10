@@ -572,7 +572,11 @@
 
                     // Create or update user in Firebase
                     const userRef = database.ref(`users/${userData.id}`);
+                    const snapshot = await userRef.once('value');
+                    const existingData = snapshot.val() || {};
+
                     await userRef.set({
+                        ...existingData,
                         id: userData.id,
                         username: userData.username,
                         discriminator: userData.discriminator,
@@ -580,8 +584,10 @@
                         lastLogin: Date.now()
                     });
 
-                    // Update UI
+                    // Update UI and save to localStorage
                     updateUserUI(userData);
+                    localStorage.setItem('discordUser', JSON.stringify(userData));
+                    localStorage.setItem('discordToken', tokenData.access_token);
 
                     // Remove code from URL
                     window.history.replaceState({}, document.title, window.location.pathname);
@@ -593,8 +599,6 @@
 
         function updateUserUI(user) {
             currentUser = user;
-            // Save user to localStorage
-            localStorage.setItem('discordUser', JSON.stringify(user));
 
             document.getElementById('loginContainer').classList.add('hidden');
             document.getElementById('gameWrapper').classList.remove('hidden');
@@ -637,16 +641,18 @@
                 lastUpdate: Date.now()
             };
 
-            database.ref(`users/${userId}`).update(userData).then(() => {
-                // Update leaderboard after saving
-                updateLeaderboard();
-            });
+            database.ref(`users/${userId}`).update(userData);
         }
 
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
                 currentUser = null;
                 localStorage.removeItem('discordUser');
+                localStorage.removeItem('discordToken');
+
+                document.getElementById('loginContainer').classList.remove('hidden');
+                document.getElementById('gameWrapper').classList.add('hidden');
+                document.getElementById('logoutBtn').classList.add('hidden');
 
                 // Clear user data from Firebase
                 const userId = document.getElementById('userAvatar').src.split('/')[4];
@@ -679,11 +685,32 @@
         });
 
         // Check for OAuth code on page load
-        window.addEventListener('load', () => {
+        window.addEventListener('load', async() => {
             const savedUser = localStorage.getItem('discordUser');
-            if (savedUser) {
-                const user = JSON.parse(savedUser);
-                updateUserUI(user);
+            const savedToken = localStorage.getItem('discordToken');
+
+            if (savedUser && savedToken) {
+                try {
+                    // Verify token is still valid
+                    const response = await fetch('https://discord.com/api/users/@me', {
+                        headers: {
+                            Authorization: `Bearer ${savedToken}`,
+                        },
+                    });
+
+                    if (response.ok) {
+                        const user = JSON.parse(savedUser);
+                        updateUserUI(user);
+                    } else {
+                        // Token is invalid, clear storage and show login
+                        localStorage.removeItem('discordUser');
+                        localStorage.removeItem('discordToken');
+                    }
+                } catch (error) {
+                    console.error('Error verifying token:', error);
+                    localStorage.removeItem('discordUser');
+                    localStorage.removeItem('discordToken');
+                }
             }
 
             const urlParams = new URLSearchParams(window.location.search);
@@ -804,7 +831,14 @@
             if (currentUser) {
                 saveUserData(currentUser.id);
             }
-        }, 5000); // Save every 5 seconds
+        }, 2000); // Save every 2 seconds
+
+        // Save data before unload
+        window.addEventListener('beforeunload', () => {
+            if (currentUser) {
+                saveUserData(currentUser.id);
+            }
+        });
     </script>
 </body>
 
