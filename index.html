@@ -616,8 +616,12 @@
                 totalClicks = data.totalClicks || 0;
                 totalScore = data.totalScore || 0;
                 gamesPlayed = data.gamesPlayed || 0;
+                currentPercentage = data.currentPercentage || 0;
 
+                // Update UI with loaded data
                 updateUI();
+                document.getElementById('counter').textContent = currentPercentage + '%';
+                document.getElementById('counter').style.fontSize = Math.min(24 + (currentPercentage * 2), 120) + 'px';
             });
         }
 
@@ -629,6 +633,7 @@
                 totalClicks,
                 totalScore,
                 gamesPlayed,
+                currentPercentage,
                 lastUpdate: Date.now()
             };
 
@@ -675,7 +680,11 @@
 
         // Check for OAuth code on page load
         window.addEventListener('load', () => {
-            loadSavedUser();
+            const savedUser = localStorage.getItem('discordUser');
+            if (savedUser) {
+                const user = JSON.parse(savedUser);
+                updateUserUI(user);
+            }
 
             const urlParams = new URLSearchParams(window.location.search);
             const code = urlParams.get('code');
@@ -790,14 +799,12 @@
             });
         }
 
-        // Load saved user data from localStorage
-        function loadSavedUser() {
-            const savedUser = localStorage.getItem('discordUser');
-            if (savedUser) {
-                const user = JSON.parse(savedUser);
-                updateUserUI(user);
+        // Save data periodically
+        setInterval(() => {
+            if (currentUser) {
+                saveUserData(currentUser.id);
             }
-        }
+        }, 5000); // Save every 5 seconds
     </script>
 </body>
 
